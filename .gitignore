@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# Maven
+target/
+*.class
+*.jar
+
+# Uploads directory
+uploads/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.xml.versionsBackup
+
+# OS
+.DS_Store
+Thumbs.db
