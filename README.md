@@ -16,7 +16,9 @@ A RESTful API for the Sky World Survey Platform. Enables administrators to creat
   - [Connecting to the Database](#connecting-to-the-database)
   - [Resetting the Database](#resetting-the-database)
 - [Running the API Locally](#running-the-api-locally)
+- [Authentication](#authentication)
 - [API Reference](#api-reference)
+  - [Auth](#auth)
   - [Surveys](#surveys)
   - [Questions](#questions)
   - [Responses](#responses)
@@ -31,12 +33,14 @@ A RESTful API for the Sky World Survey Platform. Enables administrators to creat
 
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 20+ |
-| Framework | Express.js |
+| Language | Java 17 (LTS) |
+| Framework | Spring Boot 3.3 |
+| ORM | Spring Data JPA + Hibernate 6 |
 | Database | MySQL 8.0 |
-| ORM / Query Builder | mysql2 |
-| XML Serialization | xml2js |
-| File Uploads | Multer |
+| Security | Spring Security 6 + JWT (JJWT 0.11.5) |
+| XML Serialization | Jackson Dataformat XML + DOM API |
+| File Uploads | Spring Multipart (built-in) |
+| Build Tool | Maven 3.8+ |
 | Containerization | Docker + Docker Compose |
 | API Documentation | Postman |
 
@@ -48,8 +52,8 @@ Ensure the following are installed on your machine before proceeding:
 
 | Tool | Version | Download |
 |---|---|---|
-| Node.js | 20 or higher | https://nodejs.org |
-| npm | 9 or higher | Bundled with Node.js |
+| Java JDK | 17 (LTS) | https://www.azul.com/downloads/ |
+| Maven | 3.8 or higher | https://maven.apache.org/download.cgi |
 | Docker Desktop | Latest stable | https://www.docker.com/products/docker-desktop |
 | Git | Any recent version | https://git-scm.com |
 | Postman | Latest stable | https://www.postman.com/downloads |
@@ -57,8 +61,8 @@ Ensure the following are installed on your machine before proceeding:
 Verify your installations:
 
 ```bash
-node --version    # should print v20.x.x or higher
-npm --version     # should print 9.x.x or higher
+java -version     # should print openjdk version "17.x.x"
+mvn -version      # should print Apache Maven 3.x.x
 docker --version  # should print Docker version 24.x.x or higher
 git --version     # should print git version 2.x.x or higher
 ```
@@ -69,35 +73,42 @@ git --version     # should print git version 2.x.x or higher
 
 ```
 simple-survey-api/
-├── docker-compose.yml          # MySQL 8 container definition
-├── .env                        # Local environment variables (never committed)
-├── .env.example                # Template — copy this to .env
+├── docker-compose.yml                    # MySQL 8 container definition
+├── .env                                  # Local environment variables (never committed)
+├── .env.example                          # Template — copy this to .env
 ├── .gitignore
-├── sky_survey_db.sql           # Full database schema + seed data
+├── sky_survey_db.sql                     # Full database schema + seed data
+├── pom.xml                               # Maven build + dependency config
 ├── docs/
-│   └── erd.png                 # Entity Relationship Diagram
+│   └── erd.png                           # Entity Relationship Diagram
 ├── postman/
-│   └── simple-survey-api.json  # Postman collection
-├── src/
-│   ├── config/
-│   │   └── db.js               # MySQL connection pool
-│   ├── controllers/
-│   │   ├── surveyController.js
-│   │   ├── questionController.js
-│   │   ├── responseController.js
-│   │   └── certificateController.js
-│   ├── routes/
-│   │   ├── surveys.js
-│   │   ├── questions.js
-│   │   ├── responses.js
-│   │   └── certificates.js
-│   ├── middleware/
-│   │   └── upload.js           # Multer config for PDF uploads
-│   ├── utils/
-│   │   └── xml.js              # XML serialization helpers
-│   └── app.js                  # Express app entry point
-├── package.json
-└── README.md
+│   └── simple-survey-api.json            # Postman collection
+├── uploads/                              # Uploaded PDF files (gitignored)
+└── src/
+    └── main/
+        ├── java/com/skyworld/survey/
+        │   ├── SurveyApplication.java    # Spring Boot entry point
+        │   ├── config/
+        │   │   └── WebConfig.java        # CORS configuration
+        │   ├── controller/               # REST controllers (XML in/out)
+        │   │   ├── AuthController.java
+        │   │   ├── SurveyController.java
+        │   │   ├── QuestionController.java
+        │   │   ├── ResponseController.java
+        │   │   └── CertificateController.java
+        │   ├── dto/                      # Request/Response DTOs (JAXB annotated)
+        │   ├── entity/                   # JPA entities (map to DB tables)
+        │   ├── exception/                # Global error handler + custom exceptions
+        │   ├── repository/               # Spring Data JPA interfaces
+        │   ├── security/                 # JWT filter + Spring Security config
+        │   │   ├── JwtUtil.java
+        │   │   ├── JwtAuthFilter.java
+        │   │   └── SecurityConfig.java
+        │   ├── service/                  # Business logic layer
+        │   └── util/                     # File storage + XML serializer
+        └── resources/
+            ├── application.properties    # All configuration
+            └── db/                       # SQL migration scripts
 ```
 
 ---
@@ -113,8 +124,6 @@ cd simple-survey-api
 
 ### 2. Create your environment file
 
-Copy the provided template and fill in your values:
-
 ```bash
 cp .env.example .env
 ```
@@ -122,12 +131,13 @@ cp .env.example .env
 Open `.env` and set your credentials:
 
 ```env
-DB_ROOT_PASSWORD=root_secret_change_me
+DB_ROOT_PASSWORD=your_root_password
 DB_NAME=sky_survey_db
-DB_USER=sky_user
-DB_PASSWORD=sky_pass_change_me
+DB_USER=your_db_user
+DB_PASSWORD=your_db_password
 DB_PORT=3306
 DB_HOST=localhost
+JWT_SECRET=your_jwt_secret_min_32_characters_long
 ```
 
 > **Important:** Never commit the `.env` file. It is already listed in `.gitignore`.
@@ -163,6 +173,7 @@ docker compose up -d
 ```
 
 This command will:
+
 1. Pull the `mysql:8.0` image if not already cached locally.
 2. Create a named volume `sky_survey_data` for persistent storage.
 3. Mount `sky_survey_db.sql` into the container's init directory — MySQL runs this script automatically on the very first startup, creating all tables and inserting seed data.
@@ -176,89 +187,45 @@ docker compose ps
 
 The `STATUS` column should show `healthy`. This may take 20–30 seconds on first run while MySQL initialises.
 
-You can also watch the startup logs:
+Watch the startup logs:
 
 ```bash
 docker compose logs -f db
 ```
 
-Wait until you see a line similar to:
+Wait until you see:
 
 ```
 [System] [MY-010931] [Server] /usr/sbin/mysqld: ready for connections.
 ```
-
-Then press `Ctrl + C` to stop following the logs.
 
 ### Connecting to the Database
 
 #### Option A — MySQL shell inside the container
 
 ```bash
-docker exec -it sky_survey_db mysql -u sky_user -psky_pass_change_me sky_survey_db
+docker exec -i sky_survey_db mysql -u your_db_user -pyour_db_password sky_survey_db
 ```
 
 Run a quick sanity check:
 
 ```sql
 SHOW TABLES;
-```
-
-Expected output:
-
-```
-+----------------------------+
-| Tables_in_sky_survey_db    |
-+----------------------------+
-| certificates               |
-| question_file_properties   |
-| question_options           |
-| questions                  |
-| response_answers           |
-| responses                  |
-| surveys                    |
-+----------------------------+
-7 rows in set
-```
-
-Confirm seed data:
-
-```sql
 SELECT id, name FROM surveys;
-```
-
-Expected output:
-
-```
-+----+----------------------------------------+
-| id | name                                   |
-+----+----------------------------------------+
-|  1 | Graduate Developer Application Survey  |
-|  2 | Internship Application Survey          |
-+----+----------------------------------------+
-```
-
-Exit the shell:
-
-```sql
 EXIT;
 ```
 
 #### Option B — GUI client (TablePlus, DBeaver, MySQL Workbench)
-
-Use these connection details (matching your `.env`):
 
 | Field | Value |
 |---|---|
 | Host | `127.0.0.1` |
 | Port | `3306` |
 | Database | `sky_survey_db` |
-| Username | `sky_user` |
-| Password | `sky_pass_change_me` |
+| Username | `your_db_user` |
+| Password | `your_db_password` |
 
 ### Stopping the Container
-
-Stop the container while keeping all data:
 
 ```bash
 docker compose down
@@ -273,34 +240,84 @@ docker compose down -v     # removes the named volume
 docker compose up -d       # recreates and re-seeds the database
 ```
 
-> Use this whenever you need a clean slate during development.
-
 ---
 
 ## Running the API Locally
 
-> The API source code setup steps will be added here once the Express.js application is scaffolded. The database must be running before starting the API.
-
-### 1. Install dependencies
-
-```bash
-npm install
-```
-
-### 2. Ensure the database container is running
+### 1. Ensure the database container is running
 
 ```bash
 docker compose up -d
 docker compose ps   # confirm STATUS is healthy
 ```
 
-### 3. Start the development server
+### 2. Load environment variables into your shell
+
+Maven does not read `.env` files automatically. Export the variables first:
 
 ```bash
-npm run dev
+export $(cat .env | grep -v '^#' | xargs)
 ```
 
-The API will be available at `http://localhost:3000`.
+Verify:
+
+```bash
+echo $DB_USER    # should print your db username
+echo $DB_NAME    # should print sky_survey_db
+```
+
+### 3. Build and run
+
+```bash
+mvn spring-boot:run
+```
+
+Or build a JAR and run it:
+
+```bash
+mvn clean package -DskipTests
+java -jar target/simple-survey-api-1.0.0.jar
+```
+
+The API will be available at `http://localhost:8080`.
+
+### application.properties key settings
+
+| Property | Value | Description |
+|---|---|---|
+| `server.port` | `8080` | Embedded Tomcat port |
+| `spring.jpa.hibernate.ddl-auto` | `validate` | Validates schema against entities on startup |
+| `spring.servlet.multipart.max-file-size` | `1MB` | Max PDF upload size |
+| `app.upload.dir` | `uploads` | Directory for uploaded PDFs |
+| `app.jwt.expiration-ms` | `86400000` | Token expiry — 24 hours |
+
+---
+
+## Authentication
+
+The API uses **JWT (JSON Web Token)** authentication via Spring Security.
+
+### How it works
+
+1. Call `POST /api/auth/login` with your credentials — receive a JWT token.
+2. Include the token in every subsequent request as `Authorization: Bearer <token>`.
+3. The `JwtAuthFilter` intercepts every request, validates the token, and sets the security context.
+
+### Roles
+
+| Role | Permissions |
+|---|---|
+| `ADMIN` | Full access — create/edit/delete surveys, questions; view all responses and download certificates |
+| `USER` | Read surveys and questions; submit responses |
+
+### Default accounts
+
+| Role | Email | Password |
+|---|---|---|
+| Admin | `admin@skyworld.com` | `Admin@1234` |
+| User | `user@skyworld.com` | `User@1234` |
+
+> Passwords are BCrypt hashed in the database. Change them in production.
 
 ---
 
@@ -317,6 +334,56 @@ File upload endpoints use `multipart/form-data` instead.
 
 ---
 
+### Auth
+
+#### Login
+
+```
+POST /api/auth/login
+```
+
+Request body (XML):
+
+```xml
+<login_request>
+  <email>admin@skyworld.com</email>
+  <password>Admin@1234</password>
+</login_request>
+```
+
+Response `200 OK`:
+
+```xml
+<auth_response>
+  <token>eyJhbGciOiJIUzI1NiJ9...</token>
+  <type>Bearer</type>
+  <username>admin</username>
+  <email>admin@skyworld.com</email>
+  <role>ADMIN</role>
+</auth_response>
+```
+
+#### Register
+
+```
+POST /api/auth/register
+```
+
+Request body (JSON or XML):
+
+```json
+{
+  "username": "johndoe",
+  "email": "johndoe@gmail.com",
+  "password": "Password@123",
+  "role": "USER"
+}
+```
+
+Response `201 Created`: same structure as login response.
+
+---
+
 ### Surveys
 
 #### Create a survey
@@ -325,7 +392,7 @@ File upload endpoints use `multipart/form-data` instead.
 POST /api/surveys
 ```
 
-Request body:
+Request:
 
 ```xml
 <survey>
@@ -342,8 +409,6 @@ Response `201 Created`:
   <description>Initial candidate screening survey</description>
 </survey>
 ```
-
----
 
 #### Fetch all surveys
 
@@ -366,53 +431,27 @@ Response `200 OK`:
 </surveys>
 ```
 
----
-
 #### Fetch a single survey
 
 ```
-GET /api/surveys/:id
+GET /api/surveys/{id}
 ```
-
-Response `200 OK`:
-
-```xml
-<survey id="1">
-  <name>Graduate Developer Application Survey</name>
-  <description>Initial candidate screening survey</description>
-</survey>
-```
-
----
 
 #### Update a survey
 
 ```
-PUT /api/surveys/:id
+PUT /api/surveys/{id}
 ```
 
-Request body:
-
-```xml
-<survey>
-  <name>Updated Survey Name</name>
-  <description>Updated description</description>
-</survey>
-```
-
-Response `200 OK`: updated survey XML.
-
----
+Request body: same structure as create.
 
 #### Delete a survey
 
 ```
-DELETE /api/surveys/:id
+DELETE /api/surveys/{id}
 ```
 
-Response `204 No Content`.
-
-> Deleting a survey cascades to all its questions, options, and responses.
+Response `204 No Content`. Cascades to all questions, options, responses and certificates.
 
 ---
 
@@ -421,7 +460,7 @@ Response `204 No Content`.
 #### Create a question
 
 ```
-POST /api/surveys/:surveyId/questions
+POST /api/surveys/{surveyId}/questions
 ```
 
 Text question:
@@ -441,7 +480,6 @@ Choice question:
   <description>You can select multiple</description>
   <options multiple="yes">
     <option value="REACT">React JS</option>
-    <option value="VUE">Vue JS</option>
     <option value="JAVA">Java</option>
   </options>
 </question>
@@ -451,67 +489,28 @@ File question:
 
 ```xml
 <question name="certificates" type="file" required="yes">
-  <text>Upload any of your certificates.</text>
-  <description>You can upload multiple (.pdf)</description>
-  <file_properties
-    format=".pdf"
-    max_file_size="1"
-    max_file_size_unit="mb"
-    multiple="yes"
-  />
+  <text>Upload your certificates.</text>
+  <description>PDF only</description>
+  <file_properties format=".pdf" max_file_size="1" max_file_size_unit="mb" multiple="yes"/>
 </question>
 ```
-
-Response `201 Created`: created question XML with assigned `id`.
-
----
 
 #### Fetch all questions for a survey
 
 ```
-GET /api/surveys/:surveyId/questions
+GET /api/surveys/{surveyId}/questions
 ```
-
-Response `200 OK`:
-
-```xml
-<questions>
-  <question id="1" name="full_name" type="short_text" required="yes">
-    <text>What is your full name?</text>
-    <description>[Surname] [First Name] [Other Names]</description>
-  </question>
-  <question id="2" name="email_address" type="email" required="yes">
-    <text>What is your email address?</text>
-    <description/>
-  </question>
-  <question id="3" name="gender" type="single_choice" required="yes">
-    <text>What is your gender?</text>
-    <description/>
-    <options multiple="no">
-      <option value="MALE">Male</option>
-      <option value="FEMALE">Female</option>
-      <option value="OTHER">Other</option>
-    </options>
-  </question>
-</questions>
-```
-
----
 
 #### Update a question
 
 ```
-PUT /api/surveys/:surveyId/questions/:questionId
+PUT /api/surveys/{surveyId}/questions/{questionId}
 ```
-
-Request body: same structure as create. Response `200 OK`: updated question XML.
-
----
 
 #### Delete a question
 
 ```
-DELETE /api/surveys/:surveyId/questions/:questionId
+DELETE /api/surveys/{surveyId}/questions/{questionId}
 ```
 
 Response `204 No Content`.
@@ -523,81 +522,45 @@ Response `204 No Content`.
 #### Submit a survey response
 
 ```
-POST /api/surveys/:surveyId/responses
+POST /api/surveys/{surveyId}/responses
 Content-Type: multipart/form-data
 ```
 
-Form fields mirror the question `name` attributes defined in the survey. File fields accept one or more `.pdf` files.
-
-Example form fields:
-
-| Field | Value |
-|---|---|
-| `full_name` | `Jane Doe` |
-| `email_address` | `janedoe@gmail.com` |
-| `description` | `I am an experienced Frontend Engineer.` |
-| `gender` | `FEMALE` |
-| `programming_stack` | `REACT,VUE` |
-| `certificates` | _(attach one or more PDF files)_ |
+| Form field | Type | Description |
+|---|---|---|
+| `full_name` | text | Maps to the question with `name="full_name"` |
+| `email_address` | text | Respondent email (also stored on the response record) |
+| `gender` | text | Single choice value e.g. `FEMALE` |
+| `programming_stack` | text | Multiple choice as comma-separated values e.g. `REACT,JAVA` |
+| `certificates` | file(s) | One or more PDF files |
 
 Response `201 Created`:
 
 ```xml
 <question_response>
+  <response_id>1</response_id>
   <full_name>Jane Doe</full_name>
   <email_address>janedoe@gmail.com</email_address>
-  <description>I am an experienced Frontend Engineer.</description>
   <gender>FEMALE</gender>
   <programming_stack>REACT,VUE</programming_stack>
   <certificates>
-    <certificate>Adobe Certification.pdf</certificate>
-    <certificate>Figma Fundamentals.pdf</certificate>
+    <certificate id="1">Adobe Certification.pdf</certificate>
   </certificates>
-  <date_responded>2026-06-08 12:30:12</date_responded>
+  <date_responded>2026-06-09 12:30:12</date_responded>
 </question_response>
 ```
-
----
 
 #### Fetch responses for a survey
 
 ```
-GET /api/surveys/:surveyId/responses
+GET /api/surveys/{surveyId}/responses?page=1&pageSize=10&email=jane@gmail.com
 ```
-
-Query parameters:
 
 | Parameter | Type | Required | Description |
 |---|---|---|---|
 | `page` | integer | No | Page number (default: 1) |
 | `pageSize` | integer | No | Results per page (default: 10) |
-| `email` | string | No | Filter by respondent email address |
-
-Example:
-
-```
-GET /api/surveys/1/responses?page=1&pageSize=10&email=jane@gmail.com
-```
-
-Response `200 OK`:
-
-```xml
-<question_responses current_page="1" last_page="1" page_size="10" total_count="2">
-  <question_response>
-    <response_id>1</response_id>
-    <full_name>John Doe</full_name>
-    <email_address>johndoe@gmail.com</email_address>
-    <description>I am an experienced FullStack Engineer.</description>
-    <gender>MALE</gender>
-    <programming_stack>REACT,JAVA,SQL,POSTGRES</programming_stack>
-    <certificates>
-      <certificate id="1">Oracle Java Certification.pdf</certificate>
-      <certificate id="2">Oracle SQL Certification.pdf</certificate>
-    </certificates>
-    <date_responded>2026-06-08 12:30:12</date_responded>
-  </question_response>
-</question_responses>
-```
+| `email` | string | No | Filter by respondent email |
 
 ---
 
@@ -606,10 +569,10 @@ Response `200 OK`:
 #### Download a certificate
 
 ```
-GET /api/certificates/:id
+GET /api/certificates/{id}
 ```
 
-Returns the PDF file as a binary download with headers:
+Returns the PDF file as a binary download:
 
 ```
 Content-Type: application/pdf
@@ -620,52 +583,39 @@ Content-Disposition: attachment; filename="original_filename.pdf"
 
 ## Postman Collection
 
-A full Postman collection is included at `postman/simple-survey-api.json`. It contains:
-
-- All endpoints with sample requests
-- Pre-set `Content-Type` headers
-- Saved example responses for every endpoint
-- A `base_url` collection variable (default: `http://localhost:3000`)
+A full Postman collection is included at `postman/simple-survey-api.json`. It contains all endpoints with sample requests and saved responses.
 
 ### Importing the collection
 
 1. Open Postman.
 2. Click **Import** in the top-left.
 3. Select `postman/simple-survey-api.json`.
-4. Set the `base_url` variable to your API URL if different from the default.
+4. Set the `base_url` collection variable to your API URL (default: `http://localhost:8080`).
 
 ---
 
 ## Assumptions Made
 
-1. **Authentication is out of scope.** All endpoints are public. There is no distinction enforced between administrator and user roles at the API level — this is assumed to be handled by the consuming frontend.
-
-2. **Multiple-choice answers are stored as comma-separated values** (e.g. `REACT,VUE,JAVA`) to match the XML response contract specified in the task. They are not normalised into a junction table.
-
-3. **File uploads are stored on the local filesystem** under an `uploads/` directory during development. The `certificates` table stores the file path. For deployment, this would be replaced with cloud object storage (e.g. AWS S3, Cloudflare R2).
-
-4. **Only `.pdf` files are accepted** for certificate uploads, with a maximum size of 1 MB per file, as specified in the seed survey's file question properties.
-
-5. **Cascading deletes are intentional.** Deleting a survey removes all its questions, options, file properties, responses, answers, and certificates. This is consistent with expected admin behaviour.
-
-6. **Soft deletes are not implemented.** Records are permanently deleted. Archiving functionality can be added in a future iteration.
-
-7. **The `name` field on a question acts as the response field key.** It must be unique within a survey and is used to map submitted form fields to their corresponding questions.
-
-8. **Pagination defaults** are page `1` with `10` results per page when not specified in the query string.
+1. **Authentication is role-based.** ADMIN users have full access. USER role can read surveys, read questions, and submit responses — but cannot manage surveys or view other users' responses.
+2. **JWT subject is the user's email address.** The email is used as the principal identifier throughout — it is stored as the JWT `sub` claim and is what `UserDetailsService` loads by.
+3. **Multiple-choice answers are stored as comma-separated values** (e.g. `REACT,VUE,JAVA`) to match the XML response contract. They are not normalised into a junction table.
+4. **File uploads are stored on the local filesystem** under the `uploads/` directory during development. The `certificates` table stores both the original filename and a UUID-based stored filename to prevent collisions. For production, replace with cloud object storage (AWS S3, Cloudflare R2).
+5. **Only `.pdf` files are accepted** for certificate uploads, with a maximum of 1 MB per file as specified in the survey's file question properties.
+6. **Cascading deletes are intentional.** Deleting a survey removes all its questions, options, responses, answers, and certificates.
+7. **Soft deletes are not implemented.** Records are permanently deleted.
+8. **Pagination defaults** to page `1` with `10` results per page when not specified in the query string.
+9. **The `ddl-auto` is set to `validate`** in production mode — Hibernate checks the schema matches the entities on startup and fails fast if there is a mismatch. Use `update` during development if you make entity changes.
 
 ---
 
 ## Deployment
-
-> Optional — additional credit is awarded for a live deployment.
 
 ### Recommended stack
 
 | Component | Service |
 |---|---|
 | API hosting | [Railway](https://railway.app) or [Render](https://render.com) |
-| Database | [Railway MySQL](https://railway.app) or [PlanetScale](https://planetscale.com) |
+| Database | Railway MySQL or [PlanetScale](https://planetscale.com) |
 | File storage | [Cloudflare R2](https://developers.cloudflare.com/r2) (S3-compatible, free tier) |
 
 ### Steps (Railway)
@@ -673,8 +623,12 @@ A full Postman collection is included at `postman/simple-survey-api.json`. It co
 1. Push your code to GitHub.
 2. Create a new Railway project and connect your `simple-survey-api` repository.
 3. Add a MySQL plugin inside the Railway project.
-4. Set the environment variables from `.env.example` using Railway's variable editor, pointing `DB_HOST` to the Railway MySQL internal hostname.
-5. Run `sky_survey_db.sql` against the Railway database using the Railway shell or a GUI client connected to the external URL.
-6. Deploy — Railway auto-detects Node.js and runs `npm start`.
+4. Set environment variables from `.env.example` in Railway's variable editor, pointing `DB_HOST` to the Railway MySQL internal hostname.
+5. Run `sky_survey_db.sql` against the Railway database using the Railway shell or a GUI client.
+6. Railway auto-detects the `pom.xml` and builds with Maven. Set the start command to:
+   ```
+   java -jar target/simple-survey-api-1.0.0.jar
+   ```
+7. Set `VITE_API_BASE_URL` (or equivalent) in your web frontend to the Railway deployment URL.
 
 Once deployed, update the `base_url` variable in your Postman collection to the live URL.
