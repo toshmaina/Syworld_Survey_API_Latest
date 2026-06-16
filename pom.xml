@@ -12,9 +12,13 @@
     <relativePath/>
   </parent>
 
+
+
   <groupId>com.skyworld</groupId>
   <artifactId>simple-survey-api</artifactId>
-  <version>1.0.0</version>
+<!--  <version>1.0.0</version>-->
+
+  <packaging>war</packaging>
   <name>simple-survey-api</name>
   <description>Sky World Survey Platform REST API</description>
 
@@ -101,6 +105,9 @@
   </dependencies>
 
   <build>
+
+    <finalName>${project.artifactId}</finalName>
+
     <plugins>
       <plugin>
         <groupId>org.springframework.boot</groupId>
@@ -114,6 +121,44 @@
           </excludes>
         </configuration>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-war-plugin</artifactId>
+        <version>3.4.0</version>
+        <configuration>
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+
+
+
     </plugins>
   </build>
+
+  <profiles>
+
+    <profile>
+      <id>wildfly</id>
+      <dependencies>
+        <dependency>
+          <groupId>org.springframework.boot</groupId>
+          <artifactId>spring-boot-starter-tomcat</artifactId>
+          <scope>provided</scope>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>org.wildfly</groupId>
+        <artifactId>wildfly-spec-api</artifactId>
+        <version>36.0.0.Final</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 </project>

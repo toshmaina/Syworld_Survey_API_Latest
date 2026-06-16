@@ -1,7 +1,3 @@
--- ─────────────────────────────────────────────────────────────────
---  Migration: Add users table for JWT authentication
---  Run this against your existing sky_survey_db
--- ─────────────────────────────────────────────────────────────────
 
 
 
