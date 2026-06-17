@@ -1,269 +1,668 @@
+
 {
-  "info": {
-    "name": "simple-survey-api",
-    "description": "Sky World Survey Platform API - Full collection with sample requests and saved responses",
-    "_postman_id": "sky-world-survey-001",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "variable": [
-    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
-    { "key": "survey_id", "value": "1", "type": "string" },
-    { "key": "question_id", "value": "1", "type": "string" },
-    { "key": "certificate_id", "value": "1", "type": "string" }
-  ],
-  "item": [
-    {
-      "name": "Surveys",
-      "item": [
-        {
-          "name": "Create Survey",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys", "host": ["{{base_url}}"], "path": ["api","surveys"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<survey>\n  <name>Graduate Developer Application Survey</name>\n  <description>Initial candidate screening survey</description>\n</survey>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          },
-          "response": [
-            {
-              "name": "201 Created",
-              "status": "Created",
-              "code": 201,
-              "body": "<survey id=\"1\">\n  <name>Graduate Developer Application Survey</name>\n  <description>Initial candidate screening survey</description>\n</survey>"
-            }
-          ]
-        },
-        {
-          "name": "Get All Surveys",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/xml" }],
-            "url": { "raw": "{{base_url}}/api/surveys", "host": ["{{base_url}}"], "path": ["api","surveys"] }
-          },
-          "response": [
-            {
-              "name": "200 OK",
-              "status": "OK",
-              "code": 200,
-              "body": "<surveys>\n  <survey id=\"1\">\n    <name>Graduate Developer Application Survey</name>\n    <description>Initial candidate screening survey</description>\n  </survey>\n  <survey id=\"2\">\n    <name>Internship Application Survey</name>\n    <description>Internship application survey</description>\n  </survey>\n</surveys>"
-            }
-          ]
-        },
-        {
-          "name": "Get Survey By ID",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/xml" }],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}"] }
-          }
-        },
-        {
-          "name": "Update Survey",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<survey>\n  <name>Updated Survey Name</name>\n  <description>Updated description</description>\n</survey>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          }
-        },
-        {
-          "name": "Delete Survey",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}"] }
-          },
-          "response": [{ "name": "204 No Content", "status": "No Content", "code": 204, "body": "" }]
-        }
-      ]
-    },
-    {
-      "name": "Questions",
-      "item": [
-        {
-          "name": "Create Short Text Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<question name=\"full_name\" type=\"short_text\" required=\"yes\">\n  <text>What is your full name?</text>\n  <description>[Surname] [First Name] [Other Names]</description>\n</question>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          }
-        },
-        {
-          "name": "Create Choice Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<question name=\"programming_stack\" type=\"multiple_choice\" required=\"yes\">\n  <text>What programming stack are you familiar with?</text>\n  <description>You can select multiple</description>\n  <options multiple=\"yes\">\n    <option value=\"REACT\">React JS</option>\n    <option value=\"VUE\">Vue JS</option>\n    <option value=\"JAVA\">Java</option>\n    <option value=\"PHP\">PHP</option>\n  </options>\n</question>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          }
-        },
-        {
-          "name": "Create File Upload Question",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<question name=\"certificates\" type=\"file\" required=\"yes\">\n  <text>Upload any of your certificates.</text>\n  <description>You can upload multiple (.pdf)</description>\n  <file_properties format=\".pdf\" max_file_size=\"1\" max_file_size_unit=\"mb\" multiple=\"yes\"/>\n</question>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          }
-        },
-        {
-          "name": "Get All Questions",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/xml" }],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions"] }
-          }
-        },
-        {
-          "name": "Update Question",
-          "request": {
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/xml" },
-              { "key": "Accept", "value": "application/xml" }
-            ],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions/{{question_id}}", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions","{{question_id}}"] },
-            "body": {
-              "mode": "raw",
-              "raw": "<question name=\"full_name\" type=\"short_text\" required=\"yes\">\n  <text>What is your full name? (Updated)</text>\n  <description>[Surname] [First Name]</description>\n</question>",
-              "options": { "raw": { "language": "xml" } }
-            }
-          }
-        },
-        {
-          "name": "Delete Question",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/questions/{{question_id}}", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","questions","{{question_id}}"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Responses",
-      "item": [
-        {
-          "name": "Submit Survey Response",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": { "raw": "{{base_url}}/api/surveys/{{survey_id}}/responses", "host": ["{{base_url}}"], "path": ["api","surveys","{{survey_id}}","responses"] },
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "full_name", "value": "Jane Doe", "type": "text" },
-                { "key": "email_address", "value": "janedoe@gmail.com", "type": "text" },
-                { "key": "description", "value": "I am an experienced Frontend Engineer.", "type": "text" },
-                { "key": "gender", "value": "FEMALE", "type": "text" },
-                { "key": "programming_stack", "value": "REACT,VUE", "type": "text" },
-                { "key": "certificates", "type": "file", "src": [] }
-              ]
-            }
-          },
-          "response": [
-            {
-              "name": "201 Created",
-              "status": "Created",
-              "code": 201,
-              "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<question_response>\n  <response_id>1</response_id>\n  <full_name>Jane Doe</full_name>\n  <email_address>janedoe@gmail.com</email_address>\n  <description>I am an experienced Frontend Engineer.</description>\n  <gender>FEMALE</gender>\n  <programming_stack>REACT,VUE</programming_stack>\n  <certificates>\n    <certificate id=\"1\">Adobe Certification.pdf</certificate>\n  </certificates>\n  <date_responded>2026-06-08 12:30:12</date_responded>\n</question_response>"
-            }
-          ]
-        },
-        {
-          "name": "Get All Responses (Paginated)",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/xml" }],
-            "url": {
-              "raw": "{{base_url}}/api/surveys/{{survey_id}}/responses?page=1&pageSize=10",
-              "host": ["{{base_url}}"],
-              "path": ["api","surveys","{{survey_id}}","responses"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "10" }
-              ]
-            }
-          }
-        },
-        {
-          "name": "Get Responses Filtered By Email",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/xml" }],
-            "url": {
-              "raw": "{{base_url}}/api/surveys/{{survey_id}}/responses?page=1&pageSize=10&email=jane@gmail.com",
-              "host": ["{{base_url}}"],
-              "path": ["api","surveys","{{survey_id}}","responses"],
-              "query": [
-                { "key": "page", "value": "1" },
-                { "key": "pageSize", "value": "10" },
-                { "key": "email", "value": "jane@gmail.com" }
-              ]
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Certificates",
-      "item": [
-        {
-          "name": "Download Certificate",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": { "raw": "{{base_url}}/api/certificates/{{certificate_id}}", "host": ["{{base_url}}"], "path": ["api","certificates","{{certificate_id}}"] }
-          },
-          "response": [
-            {
-              "name": "200 OK - PDF File Download",
-              "status": "OK",
-              "code": 200,
-              "header": [
-                { "key": "Content-Type", "value": "application/pdf" },
-                { "key": "Content-Disposition", "value": "attachment; filename=\"certificate.pdf\"" }
-              ],
-              "body": "[Binary PDF content]"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+"info": {
+"name": "simple-survey-api",
+"description": "Sky World Survey Platform API - Full collection with sample requests and saved responses",
+"_postman_id": "sky-world-survey-001",
+"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+},
+"variable": [
+{
+"key": "base_url",
+"value": "http://154.74.179.186:8181/simple-survey-api",
+"type": "string"
+},
+{
+"key": "survey_id",
+"value": "1",
+"type": "string"
+},
+{
+"key": "question_id",
+"value": "1",
+"type": "string"
+},
+{
+"key": "certificate_id",
+"value": "1",
+"type": "string"
 }
+],
+"item": [
+{
+"name": "Auth",
+"item": [
+{
+"name": "Login",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/auth/login",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"auth",
+"login"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<login_request>\n  <email>admin@skyworld.com</email>\n  <password>Admin@1234</password>\n</login_request>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+},
+"response": [
+{
+"name": "200 OK",
+"status": "OK",
+"code": 200,
+"body": "<auth_response>\n  <token>eyJhbGciOiJIUzI1NiJ9...</token>\n  <type>Bearer</type>\n  <username>admin</username>\n  <email>admin@skyworld.com</email>\n  <role>ADMIN</role>\n</auth_response>"
+}
+]
+},
+{
+"name": "Register",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/json"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/auth/register",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"auth",
+"register"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "{\n  \"username\": \"johndoe\",\n  \"email\": \"johndoe@gmail.com\",\n  \"password\": \"Password@123\",\n  \"role\": \"USER\"\n}",
+"options": {
+"raw": {
+"language": "json"
+}
+}
+}
+},
+"response": [
+{
+"name": "201 Created",
+"status": "Created",
+"code": 201,
+"body": "<auth_response>\n  <token>eyJhbGciOiJIUzI1NiJ9...</token>\n  <type>Bearer</type>\n  <username>johndoe</username>\n  <email>johndoe@gmail.com</email>\n  <role>USER</role>\n</auth_response>"
+}
+]
+}
+]
+},
+{
+"name": "Surveys",
+"item": [
+{
+"name": "Create Survey",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<survey>\n  <name>Graduate Developer Application Survey</name>\n  <description>Initial candidate screening survey</description>\n</survey>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+},
+"response": [
+{
+"name": "201 Created",
+"status": "Created",
+"code": 201,
+"body": "<survey id=\"1\">\n  <name>Graduate Developer Application Survey</name>\n  <description>Initial candidate screening survey</description>\n</survey>"
+}
+]
+},
+{
+"name": "Get All Surveys",
+"request": {
+"method": "GET",
+"header": [
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys"
+]
+}
+},
+"response": [
+{
+"name": "200 OK",
+"status": "OK",
+"code": 200,
+"body": "<surveys>\n  <survey id=\"1\">\n    <name>Graduate Developer Application Survey</name>\n    <description>Initial candidate screening survey</description>\n  </survey>\n  <survey id=\"2\">\n    <name>Internship Application Survey</name>\n    <description>Internship application survey</description>\n  </survey>\n</surveys>"
+}
+]
+},
+{
+"name": "Get Survey By ID",
+"request": {
+"method": "GET",
+"header": [
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}"
+]
+}
+}
+},
+{
+"name": "Update Survey",
+"request": {
+"method": "PUT",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<survey>\n  <name>Updated Survey Name</name>\n  <description>Updated description</description>\n</survey>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+}
+},
+{
+"name": "Delete Survey",
+"request": {
+"method": "DELETE",
+"header": [],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}"
+]
+},
+"response": [
+{
+"name": "204 No Content",
+"status": "No Content",
+"code": 204,
+"body": ""
+}
+]
+}
+}
+]
+},
+{
+"name": "Questions",
+"item": [
+{
+"name": "Create Short Text Question",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<question name=\"full_name\" type=\"short_text\" required=\"yes\">\n  <text>What is your full name?</text>\n  <description>[Surname] [First Name] [Other Names]</description>\n</question>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+}
+},
+{
+"name": "Create Choice Question",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<question name=\"programming_stack\" type=\"multiple_choice\" required=\"yes\">\n  <text>What programming stack are you familiar with?</text>\n  <description>You can select multiple</description>\n  <options multiple=\"yes\">\n    <option value=\"REACT\">React JS</option>\n    <option value=\"VUE\">Vue JS</option>\n    <option value=\"JAVA\">Java</option>\n    <option value=\"PHP\">PHP</option>\n  </options>\n</question>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+}
+},
+{
+"name": "Create File Upload Question",
+"request": {
+"method": "POST",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<question name=\"certificates\" type=\"file\" required=\"yes\">\n  <text>Upload any of your certificates.</text>\n  <description>You can upload multiple (.pdf)</description>\n  <file_properties format=\".pdf\" max_file_size=\"1\" max_file_size_unit=\"mb\" multiple=\"yes\"/>\n</question>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+}
+},
+{
+"name": "Get All Questions",
+"request": {
+"method": "GET",
+"header": [
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions"
+]
+}
+}
+},
+{
+"name": "Update Question",
+"request": {
+"method": "PUT",
+"header": [
+{
+"key": "Content-Type",
+"value": "application/xml"
+},
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions/{{question_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions",
+"{{question_id}}"
+]
+},
+"body": {
+"mode": "raw",
+"raw": "<question name=\"full_name\" type=\"short_text\" required=\"yes\">\n  <text>What is your full name? (Updated)</text>\n  <description>[Surname] [First Name]</description>\n</question>",
+"options": {
+"raw": {
+"language": "xml"
+}
+}
+}
+}
+},
+{
+"name": "Delete Question",
+"request": {
+"method": "DELETE",
+"header": [],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/questions/{{question_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"questions",
+"{{question_id}}"
+]
+}
+}
+}
+]
+},
+{
+"name": "Responses",
+"item": [
+{
+"name": "Submit Survey Response",
+"request": {
+"method": "POST",
+"header": [],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/responses",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"responses"
+]
+},
+"body": {
+"mode": "formdata",
+"formdata": [
+{
+"key": "full_name",
+"value": "Jane Doe",
+"type": "text"
+},
+{
+"key": "email_address",
+"value": "janedoe@gmail.com",
+"type": "text"
+},
+{
+"key": "description",
+"value": "I am an experienced Frontend Engineer.",
+"type": "text"
+},
+{
+"key": "gender",
+"value": "FEMALE",
+"type": "text"
+},
+{
+"key": "programming_stack",
+"value": "REACT,VUE",
+"type": "text"
+},
+{
+"key": "certificates",
+"type": "file",
+"src": []
+}
+]
+}
+},
+"response": [
+{
+"name": "201 Created",
+"status": "Created",
+"code": 201,
+"body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<question_response>\n  <response_id>1</response_id>\n  <full_name>Jane Doe</full_name>\n  <email_address>janedoe@gmail.com</email_address>\n  <description>I am an experienced Frontend Engineer.</description>\n  <gender>FEMALE</gender>\n  <programming_stack>REACT,VUE</programming_stack>\n  <certificates>\n    <certificate id=\"1\">Adobe Certification.pdf</certificate>\n  </certificates>\n  <date_responded>2026-06-08 12:30:12</date_responded>\n</question_response>"
+}
+]
+},
+{
+"name": "Get All Responses (Paginated)",
+"request": {
+"method": "GET",
+"header": [
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/responses?page=1&pageSize=10",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"responses"
+],
+"query": [
+{
+"key": "page",
+"value": "1"
+},
+{
+"key": "pageSize",
+"value": "10"
+}
+]
+}
+}
+},
+{
+"name": "Get Responses Filtered By Email",
+"request": {
+"method": "GET",
+"header": [
+{
+"key": "Accept",
+"value": "application/xml"
+}
+],
+"url": {
+"raw": "{{base_url}}/api/surveys/{{survey_id}}/responses?page=1&pageSize=10&email=jane@gmail.com",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"surveys",
+"{{survey_id}}",
+"responses"
+],
+"query": [
+{
+"key": "page",
+"value": "1"
+},
+{
+"key": "pageSize",
+"value": "10"
+},
+{
+"key": "email",
+"value": "jane@gmail.com"
+}
+]
+}
+}
+}
+]
+},
+{
+"name": "Certificates",
+"item": [
+{
+"name": "Download Certificate",
+"request": {
+"method": "GET",
+"header": [],
+"url": {
+"raw": "{{base_url}}/api/certificates/{{certificate_id}}",
+"host": [
+"{{base_url}}"
+],
+"path": [
+"api",
+"certificates",
+"{{certificate_id}}"
+]
+}
+},
+"response": [
+{
+"name": "200 OK - PDF File Download",
+"status": "OK",
+"code": 200,
+"header": [
+{
+"key": "Content-Type",
+"value": "application/pdf"
+},
+{
+"key": "Content-Disposition",
+"value": "attachment; filename=\"certificate.pdf\""
+}
+],
+"body": "[Binary PDF content]"
+}
+]
+}
+]
+}
+]
+}
+
